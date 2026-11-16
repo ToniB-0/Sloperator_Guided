@@ -1,0 +1,2 @@
+# Ignored by search tools (rg, etc.) but still tracked by Git.
+uv.lock

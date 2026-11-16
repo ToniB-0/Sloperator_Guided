@@ -34,11 +34,12 @@ Prints `small slop` twice, then `big slop`.
 | SlopLang      | Conventional | Meaning                                                 |
 | ------------- | ------------ | ------------------------------------------------------- |
 | `slop`        | `let`        | Declare a mutable variable                              |
+| `loadbearing` | `const`      | Declare an immutable variable                           |
 | `clanker`     | `fn`         | Define a function                                       |
 | `vibe`        | `if`         | Conditional                                             |
 | `nah`         | `else`       | Else branch                                             |
 | `ralph`       | `while`      | Loop while a condition is `✅`                          |
-| `hallucinate` | `print`      | Print one value, then a newline                         |
+| `hallucinate` | `print`      | Print values separated by spaces, then a newline        |
 | `ship`        | `return`     | Return one value from a function                        |
 | `✨`          | `;`          | Statement terminator (required)                         |
 | `—`           | `//`         | Start a line comment                                    |
@@ -72,6 +73,8 @@ No implicit conversions.
 
 `slop` declares a mutable variable and requires an initializer. A scope cannot declare a name twice, but an inner block may shadow an outer name.
 
+`loadbearing` declares an immutable variable. It also requires an initializer, follows the same scoping and shadowing rules as `slop`, and cannot be redeclared in the same scope. Assigning to a `loadbearing` name is a runtime error: `cannot assign to loadbearing '<name>'`.
+
 ```slop
 slop score = 10✨
 slop LIMIT = 100✨
@@ -79,7 +82,7 @@ score = score + 5✨
 score = score + 1✨
 ```
 
-Assignment is a statement, not an expression: `name = expression✨`. It updates the nearest existing `slop` variable. Reading or assigning an undefined name is a runtime error.
+Assignment is a statement, not an expression: `name = expression✨`. It updates the nearest existing mutable variable. Reading or assigning an undefined name is a runtime error.
 
 Every brace block is a lexical scope. Assignment searches the current scope, then each enclosing scope.
 
@@ -120,10 +123,12 @@ Call depth is capped at 500 nested calls. Exceeding it is a runtime error (`stac
 
 ## Built-Ins
 
-`hallucinate(value)` is the only built-in. It accepts exactly one argument, prints it followed by a newline, and returns `nil`. Numbers print as base-10 digits, strings without quotes, booleans as `✅`/`❌`, nil as `nil`, and functions as `<clanker name>`.
+`hallucinate(value, ...)` is the only built-in. It accepts any number of arguments, prints them separated by single spaces followed by a newline, and returns `nil`. With no arguments it prints just a newline. Numbers print as base-10 digits, strings without quotes, booleans as `✅`/`❌`, nil as `nil`, and functions as `<clanker name>`.
 
 ```slop
-hallucinate(3)✨   — 3
+hallucinate(3)✨                — 3
+hallucinate(“slop”, 3, ✅)✨    — slop 3 ✅
+hallucinate()✨                — a blank line
 ```
 
 ## Operators
@@ -152,7 +157,7 @@ functionDecl   -> "clanker" IDENTIFIER "(" parameters? ")" block ;
 parameters     -> IDENTIFIER ( "," IDENTIFIER )* ;
 
 declaration    -> variableDecl | statement ;
-variableDecl   -> "slop" IDENTIFIER "=" expression "✨" ;
+variableDecl   -> ( "slop" | "loadbearing" ) IDENTIFIER "=" expression "✨" ;
 
 statement      -> assignStmt | ifStmt | loopStmt | returnStmt
                 | block | expressionStmt ;

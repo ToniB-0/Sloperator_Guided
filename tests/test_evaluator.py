@@ -19,6 +19,9 @@ def fails(source: str) -> str:
     ("expression", "expected"),
     [
         ("7 / 2", "3"),
+        ("-7 / 2", "-3"),  # truncates toward zero, not floor division's -4
+        ("7 / -2", "-3"),
+        ("-7 / -2", "3"),
         ("2 - 3 * 4", "-10"),
         ("(2 - 3) * 4", "-4"),
         ("--5", "5"),
@@ -58,6 +61,39 @@ def test_logical_operands_must_be_booleans():
     assert fails("hallucinate(✅ && 1)✨") == (
         "SlopLang runtime error at line 1: right operand of '&&' must be a boolean, got number"
     )
+
+
+def test_loadbearing_cannot_be_reassigned():
+    assert fails("loadbearing x = 1✨\nx = 2✨") == (
+        "SlopLang runtime error at line 2: cannot assign to loadbearing 'x'"
+    )
+
+
+def test_assignment_from_inner_scope_to_loadbearing_fails():
+    source = """loadbearing x = 1✨
+{
+    x = 2✨
+}"""
+    assert fails(source) == "SlopLang runtime error at line 3: cannot assign to loadbearing 'x'"
+
+
+def test_loadbearing_shadows_like_slop():
+    source = """loadbearing x = 1✨
+{
+    loadbearing x = 2✨
+    hallucinate(x)✨
+}
+hallucinate(x)✨"""
+    assert run(source) == "2\n1\n"
+
+
+def test_loadbearing_initializer_can_read_outer_binding():
+    source = """slop x = 1✨
+{
+    loadbearing x = x + 1✨
+    hallucinate(x)✨
+}"""
+    assert run(source) == "2\n"
 
 
 def test_assignment_walks_up_the_scope_chain():
@@ -145,6 +181,22 @@ hallucinate(f())✨
 hallucinate(f)✨
 hallucinate(hallucinate)✨"""
     assert run(source) == "0\n-42\nstr\n✅\n❌\nnil\n<clanker f>\n<clanker hallucinate>\n"
+
+
+def test_hallucinate_accepts_multiple_arguments():
+    assert run("hallucinate(1, “two”, ✅)✨") == "1 two ✅\n"
+
+
+def test_hallucinate_with_no_arguments_prints_a_blank_line():
+    assert run("hallucinate()✨") == "\n"
+
+
+def test_hallucinate_separates_arguments_with_single_spaces():
+    source = """hallucinate(“before”)✨
+hallucinate()✨
+hallucinate(1, 2, 3)✨
+hallucinate(“after”)✨"""
+    assert run(source) == "before\n\n1 2 3\nafter\n"
 
 
 def test_variation_selector_after_emoji_is_accepted():

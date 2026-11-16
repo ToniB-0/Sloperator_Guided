@@ -39,6 +39,10 @@ def test_variation_selector_after_emoji_is_absorbed():
     assert tokens[0].lexeme == "✅️"
 
 
+def test_loadbearing_is_a_keyword():
+    assert types("loadbearing") == [TokenType.LOADBEARING, TokenType.EOF]
+
+
 def test_number_literal_is_an_int():
     assert tokenize("9001")[0] == Token(TokenType.NUMBER, "9001", 9001, 1)
 
@@ -58,6 +62,7 @@ def test_string_may_contain_em_dash_and_opening_quote():
         ("x;", 1, "semicolons are not supported, end statements with ✨"),
         ("\n// nope", 2, "comments start with an em dash (—), not //"),
         ("– nope", 1, "'–' is an en dash, comments start with an em dash (—)"),
+        ("— a comment\n@", 2, "unexpected character '@'"),
         ("x”", 1, "unexpected closing quote ” without an opening “"),
         ("“abc", 1, "unterminated string"),
         ("“abc\n”", 1, "unterminated string"),

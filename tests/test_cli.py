@@ -34,3 +34,42 @@ def test_missing_file_and_usage():
     missing = run_cli(str(ROOT / "nope.slop"))
     assert missing.returncode == 2
     assert "could not read" in missing.stderr
+
+
+def test_check_accepts_valid_file_without_running_it(tmp_path: Path):
+    program = tmp_path / "valid.slop"
+    program.write_text("hallucinate(“should not print”)✨\n", encoding="utf-8")
+    completed = run_cli("--check", str(program))
+    assert completed.returncode == 0
+    assert completed.stdout == ""
+    assert completed.stderr == ""
+
+
+def test_check_reports_syntax_errors_without_running(tmp_path: Path):
+    program = tmp_path / "bad.slop"
+    program.write_text("hallucinate(“before”)✨\nslop x✨\n", encoding="utf-8")
+    completed = run_cli("--check", str(program))
+    assert completed.returncode == 1
+    assert completed.stdout == ""
+    assert completed.stderr == (
+        "SlopLang syntax error at line 2: "
+        "expected '=' after variable name, an initializer is required, found '✨'\n"
+    )
+
+
+def test_check_reports_lexical_errors(tmp_path: Path):
+    program = tmp_path / "bad.slop"
+    program.write_text('hallucinate("hi")✨\n', encoding="utf-8")
+    completed = run_cli("--check", str(program))
+    assert completed.returncode == 1
+    assert completed.stdout == ""
+    assert "SlopLang lexical error at line 1" in completed.stderr
+
+
+def test_check_missing_file_and_usage(tmp_path: Path):
+    no_file = run_cli("--check")
+    assert no_file.returncode == 2
+    assert "usage:" in no_file.stderr
+    missing = run_cli("--check", str(tmp_path / "nope.slop"))
+    assert missing.returncode == 2
+    assert "could not read" in missing.stderr
