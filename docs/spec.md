@@ -79,10 +79,12 @@ No implicit conversions.
 slop score = 10✨
 slop LIMIT = 100✨
 score = score + 5✨
-score = score + 1✨
+score += 2✨
 ```
 
-Assignment is a statement, not an expression: `name = expression✨`. It updates the nearest existing mutable variable. Reading or assigning an undefined name is a runtime error.
+Assignment is a statement, not an expression: `name = expression✨` or `name += expression✨`. It updates the nearest existing mutable variable. Reading or assigning an undefined name is a runtime error.
+
+`+=` evaluates its right-hand expression first, then adds it to the nearest existing variable's current value using the same rules as `+`: both operands must be numbers or both must be strings. Undefined names, immutable bindings, and incompatible operand types are runtime errors.
 
 Every brace block is a lexical scope. Assignment searches the current scope, then each enclosing scope.
 
@@ -161,7 +163,7 @@ variableDecl   -> ( "slop" | "loadbearing" ) IDENTIFIER "=" expression "✨" ;
 
 statement      -> assignStmt | ifStmt | loopStmt | returnStmt
                 | block | expressionStmt ;
-assignStmt     -> IDENTIFIER "=" expression "✨" ;
+assignStmt     -> IDENTIFIER ( "=" | "+=" ) expression "✨" ;
 ifStmt         -> "vibe" expression block ( "nah" block )? ;
 loopStmt       -> "ralph" expression block ;
 returnStmt     -> "ship" expression "✨" ;

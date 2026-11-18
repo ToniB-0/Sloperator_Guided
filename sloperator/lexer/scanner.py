@@ -15,7 +15,6 @@ SINGLE_CHAR_TOKENS: dict[str, TokenType] = {
     "{": TokenType.LEFT_BRACE,
     "}": TokenType.RIGHT_BRACE,
     ",": TokenType.COMMA,
-    "+": TokenType.PLUS,
     "-": TokenType.MINUS,
     "*": TokenType.STAR,
     "/": TokenType.SLASH,
@@ -94,6 +93,9 @@ class Scanner:
             return
         if is_identifier_start(ch):
             self.identifier()
+            return
+        if ch == "+":
+            self.add_token(TokenType.PLUS_EQUAL if self.match("=") else TokenType.PLUS)
             return
         if ch in SINGLE_CHAR_TOKENS:
             self.add_token(SINGLE_CHAR_TOKENS[ch])
@@ -178,4 +180,4 @@ def is_identifier_start(ch: str) -> bool:
 
 
 def is_identifier_char(ch: str) -> bool:
-    return is_identifier_start(ch)
+    return is_identifier_start(ch) or is_digit(ch)

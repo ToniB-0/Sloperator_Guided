@@ -17,3 +17,6 @@ node_modules/
 
 # Playground run logs
 logs/
+
+# Playwright MCP local browser data
+.playwright-mcp/

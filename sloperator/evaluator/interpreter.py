@@ -65,8 +65,11 @@ class Interpreter:
                 value = self.evaluate(initializer)
                 kind = BindingKind.MUTABLE if mutable else BindingKind.LOADBEARING
                 self.environment.declare(name.lexeme, value, kind, name.line)
-            case Assign(name, _, value_expr):
+            case Assign(name, operator, value_expr):
                 value = self.evaluate(value_expr)
+                if operator.type is TokenType.PLUS_EQUAL:
+                    current = self.environment.get(name.lexeme, name.line)
+                    value = self.add(current, value, operator)
                 self.environment.assign(name.lexeme, value, name.line)
             case ExprStmt(expression):
                 self.evaluate(expression)
@@ -81,7 +84,7 @@ class Interpreter:
             case Ship(_, value_expr):
                 raise ShipSignal(self.evaluate(value_expr))
             case Block():
-                self.execute_block(statement, Environment(self.globals))
+                self.execute_block(statement, Environment(self.environment))
             case FunctionDecl(name, _, _):
                 self.environment.declare(
                     name.lexeme, SlopFunction(statement), BindingKind.IMMUTABLE, name.line
@@ -171,8 +174,9 @@ class Interpreter:
             case TokenType.BANG_EQUAL:
                 return not values_equal(left, right)
             case _:
-                pass
+                return self.numeric_binary(left, operator, right)
 
+    def numeric_binary(self, left: Value, operator: Token, right: Value) -> Value:
         if not (is_number(left) and is_number(right)):
             raise SlopRuntimeError(
                 operator.line,

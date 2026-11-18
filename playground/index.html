@@ -63,7 +63,8 @@
         resize: vertical;
       }
       pre {
-        min-width: 800px;
+        min-width: 0;
+        max-width: 100%;
         min-height: 6rem;
         margin: 0.75rem 0 0;
         padding: 0.75rem;
@@ -72,9 +73,18 @@
         color: #e6e6e6;
         white-space: pre-wrap;
         overflow-wrap: anywhere;
+        overflow-x: auto;
       }
       pre .err {
         color: #ff8a80;
+      }
+      @media (max-width: 480px) {
+        body {
+          padding: 1rem;
+        }
+        textarea {
+          height: 16rem;
+        }
       }
     </style>
   </head>
@@ -123,15 +133,16 @@ ralph count < MAX {
             body: JSON.stringify({ source: source.value }),
           });
           const result = await response.json();
-          if (result.stderr) {
-            output.textContent = "";
-            return;
+          output.textContent = "";
+          if (result.stdout) {
+            output.append(result.stdout);
           }
-          output.textContent = result.stdout;
           if (result.stderr) {
             const err = document.createElement("span");
             err.className = "err";
-            err.textContent = result.stderr;
+            err.textContent =
+              (result.stdout && !result.stdout.endsWith("\n") ? "\n" : "") +
+              result.stderr;
             output.appendChild(err);
           }
           if (!result.stdout && !result.stderr) {
